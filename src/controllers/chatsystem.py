@@ -12,7 +12,8 @@ db = client.get_database()
 def first_page():
     return 'Hello, user! Welcome to my Messenger API.'
 
-# 1 User Endpoints
+
+# User Endpoints
 @app.route("/user/create/<username>")
 def createUser(username):
     new_user = {"name":username}
@@ -25,8 +26,7 @@ def createUser(username):
         return dumps(f"New user created. Name: {username}")
 
 
-
-#2 Chat Endpoints
+# Chat Endpoints
 @app.route("/chat/create/<chatname>")
 def newChat(chatname):
     chats = db.conversations.distinct("chat_name")
@@ -39,13 +39,14 @@ def newChat(chatname):
         return dumps(res)
 
 
+# Connect Chat-User
 @app.route("/chat/<chatname>/adduser/<user>")
 def addUser(chatname,user):
     print(user)
     chat_id = db.conversations.find_one({"chat_name":chatname},{"_id":1})
     print(chat_id)
     if len(chat_id)==0:
-        return dumps("Chat doesn't exist. Please try again")
+        return dumps("Chat doesn't exist. Please, try again")
     else:
         user_id = db.users.find_one({"name":user},{"_id":1})
         print(user_id)
@@ -56,7 +57,7 @@ def addUser(chatname,user):
         return dumps(dic)
    
 
-
+# Messages Endpoints
 @app.route("/chat/<chatname>/user/<username>/addmessage/<message>")
 def newMessage(chatname,username,message):
     chat_id = db.conversations.find_one({"chat_name":chatname},{"_id":1})
@@ -66,7 +67,7 @@ def newMessage(chatname,username,message):
     user_id = db.users.find_one({"name":username},{"_id":1})
     print(user_id)
     if user_id==0:
-        raise APIError ("Username doesn't exist, please check your spelling")
+        return dumps("User doesn't exist. Please, try again")
     else:
         message_info={"user":user_id["_id"],"name":username, "chat":chat_id["_id"],"chat_name": chatname, "message":message}
         db.chatproject.insert_one(message_info)
@@ -75,6 +76,7 @@ def newMessage(chatname,username,message):
         return dumps(dic)
 
 
+# Show messages
 @app.route("/chat/<chatname>/list")
 def getMessages(chatname):
     res = db.chatproject.find({"chat_name":chatname},{"chat_name":1,"message":1})
